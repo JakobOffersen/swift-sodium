@@ -133,11 +133,12 @@ public extension Aead.ChaCha20Poly1305Ietf {
      - Parameter additionalData: A typical use for these data is to authenticate version numbers, timestamps or monotonically increasing counters
      - Returns: A `Bytes` object containing the nonce and authenticated ciphertext.
      */
-    func encrypt(message: Bytes, secretKey: Key, additionalData: Bytes? = nil) -> Bytes? {
+    func encrypt(message: Bytes, secretKey: Key, additionalData: Bytes? = nil, nonce: Nonce? = nil) -> Bytes? {
         guard let (authenticatedCipherText, usedNonce): (Bytes, Nonce) = encrypt(
             message: message,
             secretKey: secretKey,
-            additionalData: additionalData
+            additionalData: additionalData,
+            nonce: nonce
         ) else { return nil }
 
         return usedNonce + authenticatedCipherText
@@ -150,13 +151,13 @@ public extension Aead.ChaCha20Poly1305Ietf {
        - Parameter additionalData: A typical use for these data is to authenticate version numbers, timestamps or monotonically increasing counters
        - Returns: The authenticated ciphertext and encryption nonce.
        */
-    func encrypt(message: Bytes, secretKey: Key, additionalData: Bytes? = nil) -> (authenticatedCipherText: Bytes, nonce: Nonce)? {
+    func encrypt(message: Bytes, secretKey: Key, additionalData: Bytes? = nil, nonce: Nonce? = nil) -> (authenticatedCipherText: Bytes, nonce: Nonce)? {
         guard secretKey.count == KeyBytes else { return nil }
 
         var authenticatedCipherText = Bytes(count: message.count + ABytes)
         var authenticatedCipherTextLen: UInt64 = 0
 
-        let nonce = self.nonce()
+        let nonce = nonce ?? self.nonce()
 
         guard .SUCCESS == crypto_aead_chacha20poly1305_ietf_encrypt (
             &authenticatedCipherText, &authenticatedCipherTextLen,
