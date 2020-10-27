@@ -13,7 +13,7 @@ enum SecureBytesError: Error {
     case outOfBounds
 }
 
-public class SecureBytes {
+open class SecureBytes {
     public private(set) var pointer: UnsafeMutablePointer<UInt8>
     private var range: Range<Int>
 
