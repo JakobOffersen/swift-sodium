@@ -21,6 +21,10 @@ public class SecureBytes {
         range.count
     }
 
+    public var isOnlyZeros: Bool {
+        sodium_is_zero(pointer, count) == 1
+    }
+
     public init(count: Int) throws {
         self.pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: count)
         self.pointer.initialize(repeating: 0, count: count)
@@ -42,6 +46,26 @@ public class SecureBytes {
         self.range = range
     }
 
+    deinit {
+        free()
+    }
+
+    public static func concat(input: [SecureBytes]) throws -> SecureBytes {
+        let combinedSize = input.reduce(0) { (accu, secureBytes) -> Int in
+            accu + secureBytes.count
+        }
+
+        let combined = try SecureBytes(count: combinedSize)
+        var pointerOffset = 0
+
+        input.forEach { (secureBytes) in
+            (combined.pointer + pointerOffset).initialize(from: secureBytes.pointer, count: secureBytes.count)
+            pointerOffset += secureBytes.count
+        }
+
+        return combined
+    }
+
     public func accessBytes(in subrange: Range<Int>) throws -> SecureBytes {
         if !subrange.isSubrange(of: self.range) { throw SecureBytesError.outOfBounds }
 
@@ -61,30 +85,7 @@ public class SecureBytes {
         range = 0..<0
     }
 
-    deinit {
-        free()
-    }
-}
-
-/// Note: Only use for debug purposes
-extension SecureBytes: CustomStringConvertible {
-    public var description: String {
-        return (range.reduce("") { (accu, index) -> String in
-            let res = accu + String(pointer.pointee)
-            pointer += 1
-            return res
-        })
-    }
-}
-
-fileprivate extension Range where Bound == Int {
-    func isSubrange(of other: Range<Int>) -> Bool {
-        self.startIndex >= other.startIndex && self.endIndex <= other.endIndex
-    }
-}
-
-public extension SecureBytes {
-    func toHex() -> String {
+    public func toHex() -> String {
         var hexString: String = ""
         let originalPointer = pointer
 
@@ -98,27 +99,20 @@ public extension SecureBytes {
     }
 }
 
-extension SecureBytes: Equatable {
-    public static func == (lhs: SecureBytes, rhs: SecureBytes) -> Bool {
-        lhs.count == rhs.count && sodium_compare(lhs.pointer, rhs.pointer, lhs.count) == 0
+/// Note: Only use for debug purposes
+extension SecureBytes: CustomStringConvertible {
+    public var description: String { toHex() }
+}
+
+fileprivate extension Range where Bound == Int {
+    func isSubrange(of other: Range<Int>) -> Bool {
+        self.startIndex >= other.startIndex && self.endIndex <= other.endIndex
     }
 }
 
-extension SecureBytes {
-    public static func concat(input: [SecureBytes]) throws -> SecureBytes {
-        let combinedSize = input.reduce(0) { (accu, secureBytes) -> Int in
-            accu + secureBytes.count
-        }
-
-        let combined = try SecureBytes(count: combinedSize)
-        var pointerOffset = 0
-
-        input.forEach { (secureBytes) in
-            (combined.pointer + pointerOffset).initialize(from: secureBytes.pointer, count: secureBytes.count)
-            pointerOffset += secureBytes.count
-        }
-
-        return combined
+extension SecureBytes: Equatable {
+    public static func == (lhs: SecureBytes, rhs: SecureBytes) -> Bool {
+        lhs.count == rhs.count && sodium_compare(lhs.pointer, rhs.pointer, lhs.count) == 0
     }
 }
 
