@@ -494,4 +494,17 @@ class SodiumTests: XCTestCase {
 
         XCTAssertTrue(decryptedEmpty == emptyMessage)
     }
+
+    func testChaCha20Poly1305IetfSecureBytes() {
+        let message = try! SecureBytes(bytes: "I am message".bytes)
+        let additionalData = try! SecureBytes(bytes: "I am additionalData".bytes)
+
+        let secretKey = sodium.aead.chacha20poly1305ietf.secureBytesKey()!
+
+
+        let (authenticatedCipherTextWithAdditionalData, nonceWithAdditionlData) = sodium.aead.chacha20poly1305ietf.encrypt(message: message, secretKey: secretKey, additionalData: additionalData)!
+        let decrypted2 = sodium.aead.chacha20poly1305ietf.decrypt(authenticatedCipherText: authenticatedCipherTextWithAdditionalData, secretKey: secretKey, nonce: nonceWithAdditionlData, additionalData: additionalData)!
+
+        XCTAssertTrue(decrypted2 == message)
+    }
 }

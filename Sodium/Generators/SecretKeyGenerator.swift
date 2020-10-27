@@ -18,4 +18,10 @@ extension SecretKeyGenerator {
         Self.keygen(&k)
         return k
     }
+
+    public func secureBytesKey() -> SecureBytes? {
+        guard let k = try? SecureBytes(count: KeyBytes) else { return nil }
+        Self.keygen(k.pointer)
+        return k
+    }
 }

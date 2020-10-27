@@ -34,6 +34,11 @@ public class SecureBytes {
         }
     }
 
+    public convenience init(bytes: [UInt8]) throws {
+        try self.init(count: bytes.count)
+        try set(bytes)
+    }
+
     /// Precondition: 'pointer' + 'range' is already properly setup, i.e. pointer is properly initialized and 'range' is a subrange of previous parent-range
     private init(pointer: UnsafeMutablePointer<UInt8>, range: Range<Int>) {
         self.pointer = pointer
@@ -94,5 +99,11 @@ public extension SecureBytes {
 
         pointer = originalPointer
         return hexString
+    }
+}
+
+extension SecureBytes: Equatable {
+    public static func == (lhs: SecureBytes, rhs: SecureBytes) -> Bool {
+        lhs.count == rhs.count && sodium_compare(lhs.pointer, rhs.pointer, lhs.count) == 0
     }
 }
