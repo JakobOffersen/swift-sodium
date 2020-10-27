@@ -121,3 +121,19 @@ extension SecureBytes {
         return combined
     }
 }
+
+extension SecureBytes: Collection {
+    public typealias Index = Int
+    public typealias Element = UInt8
+
+    public var startIndex: Index { 0 }
+    public var endIndex: Index { count }
+
+    public subscript(position: Index) -> Element {
+        pointer[position]
+    }
+
+    public func index(after i: Index) -> Index {
+        i + 1
+    }
+}
