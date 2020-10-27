@@ -82,10 +82,10 @@ open class SecureBytes {
     public func set(_ input: Bytes, offset: Int = 0) throws {
         var input = input
         if input.count > range.count - offset { throw SecureBytesError.outOfBounds }
-        pointer.initialize(from: &input, count: input.count)
+        (pointer + offset).initialize(from: &input, count: input.count)
     }
 
-    private func set(_ input: SecureBytes, offset: Int) throws {
+    private func set(_ input: SecureBytes, offset: Int = 0) throws {
         if input.count > range.count - offset { throw SecureBytesError.outOfBounds }
         (pointer + offset).initialize(from: input.pointer, count: input.count)
     }
