@@ -8,7 +8,7 @@
 import Foundation
 import Clibsodium
 
-enum SecureBytesError: Error {
+public enum SecureBytesError: Error {
     case mlockFailed
     case outOfBounds
 }
