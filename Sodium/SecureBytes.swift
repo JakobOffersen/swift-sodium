@@ -50,20 +50,10 @@ public class SecureBytes {
         free()
     }
 
-    public static func concat(input: [SecureBytes]) throws -> SecureBytes {
-        let combinedSize = input.reduce(0) { (accu, secureBytes) -> Int in
-            accu + secureBytes.count
-        }
-
-        let combined = try SecureBytes(count: combinedSize)
-        var pointerOffset = 0
-
-        input.forEach { (secureBytes) in
-            (combined.pointer + pointerOffset).initialize(from: secureBytes.pointer, count: secureBytes.count)
-            pointerOffset += secureBytes.count
-        }
-
-        return combined
+    public func free() {
+        sodium_memzero(pointer, range.count)
+        sodium_munlock(pointer, range.count)
+        range = 0..<0
     }
 
     public func accessBytes(in subrange: Range<Int>) throws -> SecureBytes {
@@ -73,16 +63,20 @@ public class SecureBytes {
         return SecureBytes(pointer: startIndexPointer, range: range)
     }
 
-    public func set(_ input: Bytes) throws {
-        var input = input //TODO: Allowed?
-        if input.count > range.count { throw SecureBytesError.outOfBounds }
-        self.pointer.initialize(from: &input, count: input.count)
+    public func replace(subrange: Range<Int>, with newBytes: SecureBytes) throws {
+        guard subrange.isSubrange(of: range) else { throw SecureBytesError.outOfBounds }
+        try set(newBytes, offset: subrange.startIndex)
     }
 
-    public func free() {
-        sodium_memzero(pointer, range.count)
-        sodium_munlock(pointer, range.count)
-        range = 0..<0
+    public func set(_ input: Bytes) throws {
+        var input = input
+        if input.count > range.count { throw SecureBytesError.outOfBounds }
+        pointer.initialize(from: &input, count: input.count)
+    }
+
+    private func set(_ input: SecureBytes, offset: Int) throws {
+        if input.count > range.count - offset { throw SecureBytesError.outOfBounds }
+        (pointer + offset).initialize(from: input.pointer, count: input.count)
     }
 
     public func toHex() -> String {
@@ -129,5 +123,25 @@ extension SecureBytes: Collection {
 
     public func index(after i: Index) -> Index {
         i + 1
+    }
+}
+
+// Static helpers
+extension SecureBytes {
+
+    public static func concat(input: [SecureBytes]) throws -> SecureBytes {
+        let combinedSize = input.reduce(0) { (accu, secureBytes) -> Int in
+            accu + secureBytes.count
+        }
+
+        let combined = try SecureBytes(count: combinedSize)
+        var pointerOffset = 0
+
+        input.forEach { (secureBytes) in
+            (combined.pointer + pointerOffset).initialize(from: secureBytes.pointer, count: secureBytes.count)
+            pointerOffset += secureBytes.count
+        }
+
+        return combined
     }
 }

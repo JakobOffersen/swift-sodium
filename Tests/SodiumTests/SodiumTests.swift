@@ -518,4 +518,21 @@ class SodiumTests: XCTestCase {
         let expected = try! SecureBytes(bytes: [1, 2, 3, 4, 5, 6, 7, 8])
         XCTAssertEqual(combined, expected)
     }
+
+    func testSecureBytesReplaceSubrange() {
+        let s1 = try! SecureBytes(bytes: [1,2,3,4,5,6])
+        let replace1 = try! SecureBytes(bytes: [9, 8, 7])
+
+        try! s1.replace(subrange: 1..<4, with: replace1)
+
+        let expected1 = try! SecureBytes(bytes: [1,9,8,7,5,6])
+        XCTAssertEqual(s1, expected1)
+
+        let s2 = try! SecureBytes(bytes: [1, 2, 3, 4, 5, 6])
+        let replace2 = try! SecureBytes(bytes: [6, 5, 4, 3, 2, 1])
+
+        try! s2.replace(subrange: 0..<s2.count, with: replace2)
+
+        XCTAssertEqual(s2, replace2)
+    }
 }
