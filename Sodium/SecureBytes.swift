@@ -15,8 +15,13 @@ enum SecureBytesError: Error {
 
 public class SecureBytes {
     public private(set) var pointer: UnsafeMutablePointer<UInt8>
+    //TODO: 'currentPosition' is not used for anything.. Remove?
     private var currentPosition: Int // current position in 'range'
     private var range: Range<Int>
+
+    public var count: Int {
+        range.count
+    }
 
     public init(count: Int) throws {
         self.pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: count)
@@ -60,13 +65,14 @@ public class SecureBytes {
     }
 }
 
+/// Note: Only use for debug purposes
 extension SecureBytes: CustomStringConvertible {
     public var description: String {
-        return (range.reduce("[") { (accu, index) -> String in
-            let res = accu + String(pointer.pointee) + ", "
+        return (range.reduce("") { (accu, index) -> String in
+            let res = accu + String(pointer.pointee)
             pointer += 1
             return res
-        }) + "]"
+        })
     }
 }
 
@@ -76,3 +82,17 @@ fileprivate extension Range where Bound == Int {
     }
 }
 
+public extension SecureBytes {
+    func toHex() -> String {
+        var hexString: String = ""
+        let originalPointer = pointer
+
+        for _ in 0 ..< self.count {
+            hexString.append(String(format:"%02x", pointer.pointee))
+            pointer += 1
+        }
+
+        pointer = originalPointer
+        return hexString
+    }
+}

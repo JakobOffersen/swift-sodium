@@ -19,6 +19,7 @@ class SodiumTests: XCTestCase {
         ("testBase64", testBase64),
         ("testBox", testBox),
         ("testGenericHash", testGenericHash),
+        ("testGenericHash+SecureBytes", testGenericHashSecureBytesExtension),
         ("testKeyDerivation", testKeyDerivation),
         ("testKeyDerivationContextTooLong", testKeyDerivationContextTooLong),
         ("testKeyDerivationInputKeyTooLong", testKeyDerivationInputKeyTooLong),
@@ -151,6 +152,18 @@ class SodiumTests: XCTestCase {
         XCTAssertTrue(s3.update(input: message))
         let h6 = sodium.utils.bin2hex(s3.final()!)!
         XCTAssertEqual(h6, h3)
+    }
+
+    func testGenericHashSecureBytesExtension() {
+        let message = "My Test Message".bytes
+        let secureBytesMessage = try! SecureBytes(count: message.count)
+        try! secureBytesMessage.set(message)
+
+        let key = sodium.utils.hex2bin("64 a9 02 6f ca 64 6c 31 df 54", ignore: " ")!
+        let secureBytesKey = try! SecureBytes(count: key.count)
+        try! secureBytesKey.set(key)
+        let h3 = sodium.genericHash.hash(message: secureBytesMessage, key: secureBytesKey, outputLength: sodium.genericHash.BytesMax)!.toHex()
+        XCTAssertEqual(h3, "cba85e39f2d03923b2f66aba99b204333edc34a8443ab1700f7920c7abcc6639963a953f35162a520b21072ab906457d21f1645e6e3985858ee95a84d0771f07")
     }
 
     func testRandomBytes() {
