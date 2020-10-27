@@ -40,6 +40,12 @@ open class SecureBytes {
         try set(bytes)
     }
 
+    public init(secureBytes: SecureBytes) throws {
+        self.pointer = secureBytes.pointer
+        self.range = secureBytes.range
+    }
+
+
     /// Precondition: 'pointer' + 'range' is already properly setup, i.e. pointer is properly initialized and 'range' is a subrange of previous parent-range
     private init(pointer: UnsafeMutablePointer<UInt8>, range: Range<Int>) {
         self.pointer = pointer
