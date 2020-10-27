@@ -9,7 +9,7 @@ import Foundation
 import Clibsodium
 
 public enum SecureBytesError: Error {
-    case mlockFailed, outOfBounds, costum(String)
+    case mlockFailed, outOfBounds, custom(String)
 }
 
 open class SecureBytes {
