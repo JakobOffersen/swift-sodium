@@ -15,8 +15,6 @@ enum SecureBytesError: Error {
 
 public class SecureBytes {
     public private(set) var pointer: UnsafeMutablePointer<UInt8>
-    //TODO: 'currentPosition' is not used for anything.. Remove?
-    private var currentPosition: Int // current position in 'range'
     private var range: Range<Int>
 
     public var count: Int {
@@ -26,7 +24,6 @@ public class SecureBytes {
     public init(count: Int) throws {
         self.pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: count)
         self.pointer.initialize(repeating: 0, count: count)
-        self.currentPosition = 0
         self.range = 0..<count
 
         guard .SUCCESS == sodium_mlock(pointer, count).exitCode else {
@@ -42,7 +39,6 @@ public class SecureBytes {
     /// Precondition: 'pointer' + 'range' is already properly setup, i.e. pointer is properly initialized and 'range' is a subrange of previous parent-range
     private init(pointer: UnsafeMutablePointer<UInt8>, range: Range<Int>) {
         self.pointer = pointer
-        self.currentPosition = 0
         self.range = range
     }
 
@@ -55,7 +51,7 @@ public class SecureBytes {
 
     public func set(_ input: Bytes) throws {
         var input = input //TODO: Allowed?
-        if input.count > range.count - currentPosition { throw SecureBytesError.outOfBounds }
+        if input.count > range.count { throw SecureBytesError.outOfBounds }
         self.pointer.initialize(from: &input, count: input.count)
     }
 
@@ -105,5 +101,23 @@ public extension SecureBytes {
 extension SecureBytes: Equatable {
     public static func == (lhs: SecureBytes, rhs: SecureBytes) -> Bool {
         lhs.count == rhs.count && sodium_compare(lhs.pointer, rhs.pointer, lhs.count) == 0
+    }
+}
+
+extension SecureBytes {
+    public static func concat(input: [SecureBytes]) throws -> SecureBytes {
+        let combinedSize = input.reduce(0) { (accu, secureBytes) -> Int in
+            accu + secureBytes.count
+        }
+
+        let combined = try SecureBytes(count: combinedSize)
+        var pointerOffset = 0
+
+        input.forEach { (secureBytes) in
+            (combined.pointer + pointerOffset).initialize(from: secureBytes.pointer, count: secureBytes.count)
+            pointerOffset += secureBytes.count
+        }
+
+        return combined
     }
 }

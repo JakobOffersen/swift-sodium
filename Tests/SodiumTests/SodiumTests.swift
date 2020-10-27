@@ -507,4 +507,15 @@ class SodiumTests: XCTestCase {
 
         XCTAssertTrue(decrypted2 == message)
     }
+
+    func testSecureBytesConcat() {
+        let s1 = try! SecureBytes(bytes: [1, 2, 3, 4])
+        let s2 = try! SecureBytes(bytes: [5, 6, 7])
+        let s3 = try! SecureBytes(bytes: [8])
+        let s4 = try! SecureBytes(bytes: [])
+
+        let combined = try! SecureBytes.concat(input: [s1, s2, s3, s4])
+        let expected = try! SecureBytes(bytes: [1, 2, 3, 4, 5, 6, 7, 8])
+        XCTAssertEqual(combined, expected)
+    }
 }
