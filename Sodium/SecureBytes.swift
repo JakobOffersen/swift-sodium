@@ -45,6 +45,11 @@ open class SecureBytes {
         unsafeRawBufferPointer.deallocate()
     }
 
+    public convenience init(from data: Data) throws {
+        try self.init(count: data.count)
+        try self.set(data)
+    }
+
     public init(secureBytes: SecureBytes) throws {
         // Note: We should NOT mlock or mem-zero the byte range as it is already done for the 'secureBytes' passed to us
         self.pointer = secureBytes.pointer
@@ -105,6 +110,12 @@ open class SecureBytes {
         if input.count > range.count - offset { throw SecureBytesError.outOfBounds }
         guard let unsafeRawPointer = input.baseAddress?.assumingMemoryBound(to: UInt8.self) else { throw SecureBytesError.pointerError }
         (pointer + offset).initialize(from: unsafeRawPointer, count: input.count)
+    }
+
+    public func set(_ input: Data, offset: Int = 0) throws {
+        try input.withUnsafeBytes { (unsafeRawBufferPointer) -> Void in
+            try self.set(unsafeRawBufferPointer)
+        }
     }
 
 //    public func set<T: Collection>(_ input: T, offset: Int = 0) throws where T.Element == UInt8 {
