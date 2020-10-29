@@ -65,7 +65,7 @@ open class SecureBytes {
         if !subrange.isSubrange(of: self.range) { throw SecureBytesError.outOfBounds }
 
         let startIndexPointer = pointer.advanced(by: subrange.startIndex)
-        return SecureBytes(pointer: startIndexPointer, range: range)
+        return SecureBytes(pointer: startIndexPointer, range: 0..<subrange.count)
     }
 
     public func replace(subrange: Range<Int>, with newBytes: SecureBytes) throws {
@@ -133,6 +133,12 @@ extension SecureBytes: Collection {
 
     public func index(after i: Index) -> Index {
         i + 1
+    }
+}
+
+extension SecureBytes: ContiguousBytes {
+    public func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
+        try body(UnsafeRawBufferPointer(start: self.pointer, count: self.count)) // Here 'UnsafeRawBufferPointer' init uses the existing memory block. A copy is NOT made according to spec.
     }
 }
 
