@@ -14,7 +14,7 @@ public struct GenericHash {
 extension GenericHash {
     public class Stream {
         private var state: UnsafeMutableRawBufferPointer
-        private var opaqueState: OpaquePointer
+        internal var opaqueState: OpaquePointer
         public var outputLength: Int = 0
 
         init?(key: Bytes?, outputLength: Int) {

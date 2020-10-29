@@ -136,7 +136,20 @@ class ReadmeTests : XCTestCase {
         let stream = sodium.genericHash.initStream(key: key)!
         stream.update(input: message1)
         stream.update(input: message2)
-        let h = stream.final()
+        let h: Bytes? = stream.final()
+
+        XCTAssertNotNil(h)
+    }
+
+    func testStreamingSecureBytes() {
+        let sodium = Sodium()
+        let message1 = try! SecureBytes(bytes: "My Test ".bytes)
+        let message2 = try! SecureBytes(bytes: "Message".bytes)
+        let key = "Secret key".bytes
+        let stream = sodium.genericHash.initStream(key: key)!
+        stream.update(input: message1)
+        stream.update(input: message2)
+        let h: SecureBytes? = stream.final()
 
         XCTAssertNotNil(h)
     }
