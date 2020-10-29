@@ -42,7 +42,7 @@ open class SecureBytes {
         // Clear the original buffer
         let unsafeMutableRawPointer = UnsafeMutableRawPointer(mutating: unsafeRawBufferPointer.baseAddress)
         sodium_memzero(unsafeMutableRawPointer, unsafeRawBufferPointer.count)
-        unsafeRawBufferPointer.deallocate()
+//        unsafeRawBufferPointer.deallocate()
     }
 
     public convenience init(from data: Data) throws {
