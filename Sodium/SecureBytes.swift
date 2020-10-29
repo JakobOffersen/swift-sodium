@@ -1,6 +1,7 @@
 //
-//  File.swift
-//
+//  SecureBytes.swift
+//  Note: Why not subclass UnsafeMutableBufferPointer? Because it's a struct, i.e. we cannot hook into the deinit call
+//        and thus we cannot leverage the ARC of Swift.
 //
 //  Created by Jakob Offersen on 14/10/2020.
 //
@@ -9,7 +10,7 @@ import Foundation
 import Clibsodium
 
 public enum SecureBytesError: Error {
-    case mlockFailed, outOfBounds, custom(String)
+    case mlockFailed, outOfBounds, pointerError, custom(String)
 }
 
 open class SecureBytes {
@@ -34,12 +35,18 @@ open class SecureBytes {
         }
     }
 
-    public convenience init(bytes: [UInt8]) throws {
-        try self.init(count: bytes.count)
-        try set(bytes)
+    public convenience init(from unsafeRawBufferPointer: UnsafeRawBufferPointer) throws {
+        try self.init(count: unsafeRawBufferPointer.count)
+        try set(unsafeRawBufferPointer)
+
+        // Clear the original buffer
+        let unsafeMutableRawPointer = UnsafeMutableRawPointer(mutating: unsafeRawBufferPointer.baseAddress)
+        sodium_memzero(unsafeMutableRawPointer, unsafeRawBufferPointer.count)
+        unsafeRawBufferPointer.deallocate()
     }
 
     public init(secureBytes: SecureBytes) throws {
+        // Note: We should NOT mlock or mem-zero the byte range as it is already done for the 'secureBytes' passed to us
         self.pointer = secureBytes.pointer
         self.range = secureBytes.range
     }
@@ -49,6 +56,11 @@ open class SecureBytes {
     private init(pointer: UnsafeMutablePointer<UInt8>, range: Range<Int>) {
         self.pointer = pointer
         self.range = range
+    }
+
+    public convenience init(bytes: [UInt8]) throws {
+        try self.init(count: bytes.count)
+        try set(bytes)
     }
 
     deinit {
@@ -88,6 +100,17 @@ open class SecureBytes {
         if input.count > range.count - offset { throw SecureBytesError.outOfBounds }
         (pointer + offset).initialize(from: input.pointer, count: input.count)
     }
+
+    public func set(_ input: UnsafeRawBufferPointer, offset: Int = 0) throws {
+        if input.count > range.count - offset { throw SecureBytesError.outOfBounds }
+        guard let unsafeRawPointer = input.baseAddress?.assumingMemoryBound(to: UInt8.self) else { throw SecureBytesError.pointerError }
+        (pointer + offset).initialize(from: unsafeRawPointer, count: input.count)
+    }
+
+//    public func set<T: Collection>(_ input: T, offset: Int = 0) throws where T.Element == UInt8 {
+//        if input.count > range.count - offset { throw SecureBytesError.outOfBounds }
+//        (pointer + offset).initialize(from: &input as UnsafePointer<UInt8>, count: <#T##Int#>)
+//    }
 
     public func toHex() -> String {
         var hexString: String = ""
@@ -161,3 +184,4 @@ extension SecureBytes {
         return combined
     }
 }
+
