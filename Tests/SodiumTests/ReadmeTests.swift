@@ -143,8 +143,8 @@ class ReadmeTests : XCTestCase {
 
     func testStreamingSecureBytes() {
         let sodium = Sodium()
-        let message1 = try! SecureBytes(bytes: "My Test ".bytes)
-        let message2 = try! SecureBytes(bytes: "Message".bytes)
+        let message1 = try! SecureBytes(source: "My Test ".bytes)
+        let message2 = try! SecureBytes(source: "Message".bytes)
         let key = "Secret key".bytes
         let stream = sodium.genericHash.initStream(key: key)!
         stream.update(input: message1)

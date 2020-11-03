@@ -20,8 +20,8 @@ extension SecretKeyGenerator {
     }
 
     public func secureBytesKey() -> SecureBytes? {
-        guard let k = try? SecureBytes(count: KeyBytes) else { return nil }
-        Self.keygen(k.pointer)
+        // Note: No idea if this works....
+        guard let k = try? SecureBytes(count: KeyBytes, pointerAccessor: Self.keygen) else { return nil }
         return k
     }
 }

@@ -157,11 +157,11 @@ class SodiumTests: XCTestCase {
     func testGenericHashSecureBytesExtension() {
         let message = "My Test Message".bytes
         let secureBytesMessage = try! SecureBytes(count: message.count)
-        try! secureBytesMessage.set(message)
+        secureBytesMessage.write(source: message)
 
         let key = sodium.utils.hex2bin("64 a9 02 6f ca 64 6c 31 df 54", ignore: " ")!
         let secureBytesKey = try! SecureBytes(count: key.count)
-        try! secureBytesKey.set(key)
+        secureBytesKey.write(source: key)
         let h3 = sodium.genericHash.hash(message: secureBytesMessage, key: secureBytesKey, outputLength: sodium.genericHash.BytesMax)!.toHex()
         XCTAssertEqual(h3, "cba85e39f2d03923b2f66aba99b204333edc34a8443ab1700f7920c7abcc6639963a953f35162a520b21072ab906457d21f1645e6e3985858ee95a84d0771f07")
     }
@@ -496,8 +496,8 @@ class SodiumTests: XCTestCase {
     }
 
     func testChaCha20Poly1305IetfSecureBytes() {
-        let message = try! SecureBytes(bytes: "I am message".bytes)
-        let additionalData = try! SecureBytes(bytes: "I am additionalData".bytes)
+        let message = try! SecureBytes(source: "I am message".bytes)
+        let additionalData = try! SecureBytes(source: "I am additionalData".bytes)
 
         let secretKey = sodium.aead.chacha20poly1305ietf.secureBytesKey()!
 
@@ -509,30 +509,70 @@ class SodiumTests: XCTestCase {
     }
 
     func testSecureBytesConcat() {
-        let s1 = try! SecureBytes(bytes: [1, 2, 3, 4])
-        let s2 = try! SecureBytes(bytes: [5, 6, 7])
-        let s3 = try! SecureBytes(bytes: [8])
-        let s4 = try! SecureBytes(bytes: [])
+        let s1 = try! SecureBytes(source: [1, 2, 3, 4])
+        let s2 = try! SecureBytes(source: [5, 6, 7])
+        let s3 = try! SecureBytes(source: [8])
+        let s4 = try! SecureBytes(source: [])
 
         let combined = try! SecureBytes.concat(input: [s1, s2, s3, s4])
-        let expected = try! SecureBytes(bytes: [1, 2, 3, 4, 5, 6, 7, 8])
+        let expected = try! SecureBytes(source: [1, 2, 3, 4, 5, 6, 7, 8])
         XCTAssertEqual(combined, expected)
     }
 
     func testSecureBytesReplaceSubrange() {
-        let s1 = try! SecureBytes(bytes: [1,2,3,4,5,6])
-        let replace1 = try! SecureBytes(bytes: [9, 8, 7])
+        let s1 = try! SecureBytes(source: [1,2,3,4,5,6])
+        let replace1 = try! SecureBytes(source: [9, 8, 7])
 
-        try! s1.replace(subrange: 1..<4, with: replace1)
+        s1.replace(subrange: 1..<4, with: replace1)
 
-        let expected1 = try! SecureBytes(bytes: [1,9,8,7,5,6])
+        let expected1 = try! SecureBytes(source: [1,9,8,7,5,6])
         XCTAssertEqual(s1, expected1)
 
-        let s2 = try! SecureBytes(bytes: [1, 2, 3, 4, 5, 6])
-        let replace2 = try! SecureBytes(bytes: [6, 5, 4, 3, 2, 1])
+        let s2 = try! SecureBytes(source: [1, 2, 3, 4, 5, 6])
+        let replace2 = try! SecureBytes(source: [6, 5, 4, 3, 2, 1])
 
-        try! s2.replace(subrange: 0..<s2.count, with: replace2)
+        s2.replace(subrange: 0..<s2.count, with: replace2)
 
         XCTAssertEqual(s2, replace2)
+    }
+
+    func testSecureBytes2Inits() {
+        let message = "hello world"
+
+        // count
+        let s1 = try! SecureBytes(count: 8)
+        // Data
+        let s2 = try! SecureBytes(source: message.data(using: .utf8)!)
+        // UnsafeRawBufferPointer
+        let unsafeRawBufferPointer: UnsafeRawBufferPointer = "hello world".bytes.withUnsafeBytes { $0 }
+
+        let s3 = try! SecureBytes(source: unsafeRawBufferPointer)
+
+        let expected1: ContiguousArray<UInt8> = [0,0,0,0,0,0,0,0]
+        let expected2: ContiguousArray<UInt8> = ContiguousArray(message.data(using: .utf8)!)
+        let expected3: ContiguousArray<UInt8> = ContiguousArray(message.bytes)
+
+        XCTAssertEqual(s1.bytes, expected1)
+        XCTAssertEqual(s2.bytes, expected2)
+        XCTAssertEqual(s3.bytes, expected3)
+    }
+
+    func testSecureBytes2ReplaceSubrange() {
+        let s1 = try! SecureBytes(count: 5)
+        let s2 = try! SecureBytes(source: [1,2,3])
+
+        s1.replace(subrange: 1..<4, with: s2)
+
+        let expected: ContiguousArray<UInt8> = [0,1,2,3,0]
+        XCTAssertEqual(s1.bytes, expected)
+    }
+
+    func testSecureBYtes2ViewBytes() {
+        let s1 = try! SecureBytes(source: [1,2,3,4,5,6])
+        let s2 = s1.viewBytes(in: 2..<5)
+
+        let expected: ArraySlice<UInt8> = [3, 4, 5]
+
+        XCTAssertEqual(s2, expected)
     }
 }
