@@ -12,7 +12,7 @@ public enum SecureBytesError: Error {
     case mlockFailed, munlockFailed, outOfBounds, pointerError, custom(String)
 }
 
-public class SecureBytes: Collection {
+open class SecureBytes: Collection {
 
     public typealias Element = UInt8
     public typealias Index = Int
