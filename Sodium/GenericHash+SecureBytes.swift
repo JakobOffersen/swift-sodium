@@ -21,7 +21,7 @@ public extension GenericHash {
                         return crypto_generichash(outputPointer, outputLength, messagePointer, UInt64(messageLength), keyPointer, keyLength).exitCode
                     }
                 } else {
-                    return crypto_generichash(outputPointer, outputLength, messagePointer, UInt64(message.count), nil, 0).exitCode
+                    return crypto_generichash(outputPointer, outputLength, messagePointer, UInt64(messageLength), nil, 0).exitCode
                 }
             }
         }
