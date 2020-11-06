@@ -110,6 +110,10 @@ extension SecretStream.XChaCha20Poly1305 {
         return PushStream(secretKey: secretKey)
     }
 
+    public func initPush(secretKey: SecureBytes) -> PushStream? {
+        return PushStream(secretKey: secretKey)
+    }
+
     /**
      Starts reading a stream, whose header is `header`.
 
@@ -119,6 +123,10 @@ extension SecretStream.XChaCha20Poly1305 {
      - Returns: The stream to decrypt messages from.
      */
     public func initPull(secretKey: Key, header: Header) -> PullStream? {
+        return PullStream(secretKey: secretKey, header: header)
+    }
+
+    public func initPull(secretKey: SecureBytes, header: Header) -> PullStream? {
         return PullStream(secretKey: secretKey, header: header)
     }
 }
