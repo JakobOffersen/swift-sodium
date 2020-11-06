@@ -14,6 +14,13 @@ public enum SecureBytesError: Error {
 
 open class SecureBytes: Collection {
 
+    private static var initCounter = 0 {
+        didSet {
+            print("#SecBytes = \(initCounter)")
+        }
+    }
+
+
     public typealias Element = UInt8
     public typealias Index = Int
 
@@ -41,6 +48,8 @@ open class SecureBytes: Collection {
             // In the latter case, we should subtract one.
             initializedCount = (nextIndex == buffer.startIndex || nextIndex == buffer.endIndex) ? nextIndex : nextIndex - 1
         })
+
+        Self.initCounter += 1
     }
 
     public init(count: Int) throws {
@@ -50,6 +59,8 @@ open class SecureBytes: Collection {
             guard .SUCCESS == sodium_mlock(pointer, count).exitCode else { throw SecureBytesError.mlockFailed }
             initializedCount = count
         })
+
+        Self.initCounter += 1
     }
 
     public init(count: Int, bufferAccessor cb: (UnsafeMutableBufferPointer<UInt8>) -> Void) throws {
@@ -57,6 +68,8 @@ open class SecureBytes: Collection {
             cb(buffer)
             initializedCount = count
         })
+
+        Self.initCounter += 1
     }
 
     public init(count: Int, pointerAccessor cb: (UnsafeMutablePointer<UInt8>) -> Void) throws {
@@ -65,6 +78,8 @@ open class SecureBytes: Collection {
             cb(pointer)
             initializedCount = count
         })
+
+        Self.initCounter += 1
     }
 
     public func accessBuffer<R>(cb: (UnsafeMutableBufferPointer<UInt8>) -> R) -> R {
@@ -91,6 +106,8 @@ open class SecureBytes: Collection {
             sodium_memzero(pointer, buffer.count)
             guard .SUCCESS == sodium_munlock(pointer, buffer.count).exitCode else { throw SecureBytesError.munlockFailed }
         }
+
+        Self.initCounter -= 1
     }
 
     public func viewBytes(in subrange: Range<Int>) -> ArraySlice<UInt8> {
