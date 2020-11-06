@@ -41,6 +41,22 @@ extension SecretStream.XChaCha20Poly1305 {
                 secretKey
             ).exitCode else { return nil }
         }
+
+        init?(secretKey: SecureBytes) {
+            guard secretKey.count == KeyBytes else { return nil }
+
+            state = crypto_secretstream_xchacha20poly1305_state()
+            _header = Bytes(count: HeaderBytes)
+
+            let exitCode = secretKey.accessPointer { (secretKeyPointer, _) -> ExitCode in
+                return crypto_secretstream_xchacha20poly1305_init_push(
+                    &state,
+                    &_header,
+                    secretKeyPointer
+                ).exitCode
+            }
+            guard exitCode == .SUCCESS else { return nil }
+        }
     }
 }
 
@@ -60,6 +76,22 @@ extension SecretStream.XChaCha20Poly1305 {
                 header,
                 secretKey
             ).exitCode else { return nil }
+        }
+
+        init?(secretKey: SecureBytes, header: Header) {
+            guard header.count == HeaderBytes, secretKey.count == KeyBytes else { return nil }
+
+            state = crypto_secretstream_xchacha20poly1305_state()
+
+            let exitCode = secretKey.accessPointer { (secretKeyPointer, _) -> ExitCode in
+                crypto_secretstream_xchacha20poly1305_init_pull(
+                    &state,
+                    header,
+                    secretKeyPointer
+                ).exitCode
+            }
+
+            guard exitCode == .SUCCESS else { return nil }
         }
     }
 }
