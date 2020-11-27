@@ -33,6 +33,8 @@ open class SecureBytes: Collection {
 
     public private(set) var bytes: ContiguousArray<UInt8>
 
+    public var id: Int
+
     public var isOnlyZeros: Bool { bytes.withUnsafeBufferPointer { sodium_is_zero($0.baseAddress, $0.count) == 1 } }
 
     public var count: Int { bytes.count }
@@ -48,8 +50,8 @@ open class SecureBytes: Collection {
             // In the latter case, we should subtract one.
             initializedCount = (nextIndex == buffer.startIndex || nextIndex == buffer.endIndex) ? nextIndex : nextIndex - 1
         })
-
         Self.initCounter += 1
+        self.id = Self.initCounter
     }
 
     public init(count: Int) throws {
@@ -61,6 +63,7 @@ open class SecureBytes: Collection {
         })
 
         Self.initCounter += 1
+        self.id = Self.initCounter
     }
 
     public init(count: Int, bufferAccessor cb: (UnsafeMutableBufferPointer<UInt8>) -> Void) throws {
@@ -70,6 +73,7 @@ open class SecureBytes: Collection {
         })
 
         Self.initCounter += 1
+        self.id = Self.initCounter
     }
 
     public init(count: Int, pointerAccessor cb: (UnsafeMutablePointer<UInt8>) -> Void) throws {
@@ -80,11 +84,11 @@ open class SecureBytes: Collection {
         })
 
         Self.initCounter += 1
+        self.id = Self.initCounter
     }
 
     public func accessBuffer<R>(cb: (UnsafeMutableBufferPointer<UInt8>) -> R) -> R {
         return bytes.withUnsafeMutableBufferPointer { (buffer) -> R in
-
             return cb(buffer)
         }
     }
@@ -107,6 +111,7 @@ open class SecureBytes: Collection {
             guard .SUCCESS == sodium_munlock(pointer, buffer.count).exitCode else { throw SecureBytesError.munlockFailed }
         }
 
+        print("Deiniting ID = \(self.id)")
         Self.initCounter -= 1
     }
 
