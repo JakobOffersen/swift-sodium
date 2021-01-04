@@ -60,4 +60,18 @@ extension Sign {
         guard exitCode == .SUCCESS else { return nil }
         return signature
     }
+
+    public func keyPair() throws -> KeyPairSecureBytes {
+        let sk = try SecureBytes(count: SecretKeyBytes)
+        let pk = try SecureBytes(count: PublicKeyBytes)
+
+        let exitCode = sk.accessPointer { (skPointer, _) -> ExitCode in
+            pk.accessPointer { (pkPointer, _) -> ExitCode in
+                Self.newKeypair(pkPointer, skPointer).exitCode
+            }
+        }
+        guard exitCode == .SUCCESS else { throw SecureBytesError.pointerError }
+
+        return KeyPairSecureBytes(publicKey: pk, secretKey: sk)
+    }
 }
