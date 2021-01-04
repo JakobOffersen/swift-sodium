@@ -220,6 +220,32 @@ class SodiumTests: XCTestCase {
         XCTAssertEqual(unsignedMessage, message)
     }
 
+    func testSignatureSecureBytes() {
+        let message = "My Test Message".bytes
+
+        let keyPair = sodium.sign.keyPair(seed: sodium.utils.hex2bin("00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff", ignore: " ")!)!
+
+        let secureBytesKeyPair: Sign.KeyPairSecureBytes = try! Sign.KeyPairSecureBytes(publicKey: keyPair.publicKey, secretKey: keyPair.secretKey)
+
+        let signatureExpected = sodium.sign.signature(message: message, secretKey: keyPair.secretKey)!
+        let signatureActual   = sodium.sign.signature(message: message, secretKey: secureBytesKeyPair.secretKey)!
+        XCTAssertEqual(signatureExpected, signatureActual)
+    }
+
+    func testSignatureSecureBytesAlternativeInit() {
+        let message = "My Test Message".bytes
+
+        let keyPair = sodium.sign.keyPair(seed: sodium.utils.hex2bin("00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff", ignore: " ")!)!
+
+        var asData = Data(keyPair.secretKey)
+        asData.append(Data(keyPair.publicKey))
+        let secureBytesKeyPair: Sign.KeyPairSecureBytes = try! Sign.KeyPairSecureBytes(data: asData)
+
+        let signatureExpected = sodium.sign.signature(message: message, secretKey: keyPair.secretKey)!
+        let signatureActual   = sodium.sign.signature(message: message, secretKey: secureBytesKeyPair.secretKey)!
+        XCTAssertEqual(signatureExpected, signatureActual)
+    }
+
     func testUtils() {
         var dataToZero = [1, 2, 3, 4] as [UInt8]
         sodium.utils.zero(&dataToZero)
@@ -567,7 +593,7 @@ class SodiumTests: XCTestCase {
         XCTAssertEqual(s1.bytes, expected)
     }
 
-    func testSecureBYtes2ViewBytes() {
+    func testSecureBytes2ViewBytes() {
         let s1 = try! SecureBytes(source: [1,2,3,4,5,6])
         let s2 = s1.viewBytes(in: 2..<5)
 
