@@ -1,5 +1,6 @@
 import XCTest
 import Sodium
+import SecureBytes
 
 extension String {
     func toData() -> Data? {

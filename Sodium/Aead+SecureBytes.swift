@@ -7,6 +7,7 @@
 
 import Foundation
 import Clibsodium
+import SecureBytes
 
 
 extension Aead.ChaCha20Poly1305Ietf {

@@ -7,6 +7,7 @@
 
 import Foundation
 import Clibsodium
+import SecureBytes
 
 extension Sign {
 

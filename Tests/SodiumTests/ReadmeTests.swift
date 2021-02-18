@@ -1,5 +1,6 @@
 import XCTest
 import Sodium
+import SecureBytes
 
 class ReadmeTests : XCTestCase {
     static let allTests = [

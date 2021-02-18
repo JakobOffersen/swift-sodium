@@ -1,4 +1,5 @@
 import Foundation
+import SecureBytes
 
 public protocol SecretKeyGenerator {
     var KeyBytes: Int { get }

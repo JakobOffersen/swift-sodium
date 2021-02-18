@@ -7,7 +7,7 @@
 
 import Foundation
 import Clibsodium
-
+import SecureBytes
 
 public extension GenericHash {
 
